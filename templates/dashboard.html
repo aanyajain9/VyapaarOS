@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>VyapaarOS | Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <h2>VyapaarOS</h2>
+            <p>Smart Business Management</p>
+        </div>
+
+        <nav>
+
+            <a href="/" class="active">
+                🏠 Dashboard
+            </a>
+
+            <a href="#">
+                📦 Inventory
+            </a>
+
+            <a href="#">
+                🛒 Sales
+            </a>
+
+            <a href="#">
+                👥 Customers
+            </a>
+
+            <a href="#">
+                💰 Udhaar
+            </a>
+
+            <a href="#">
+                💸 Expenses
+            </a>
+
+            <a href="#">
+                📊 Reports
+            </a>
+
+            <a href="#">
+                ⚙️ Profile
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Header -->
+        <header class="topbar">
+
+            <div>
+                <h1>Dashboard</h1>
+                <p>Welcome back! Here's your business overview.</p>
+            </div>
+
+            <div class="profile">
+                👤
+                <span>Shop Owner</span>
+            </div>
+
+        </header>
+
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+
+            <button>
+                + Add Product
+            </button>
+
+            <button>
+                + New Sale
+            </button>
+
+            <button>
+                + Add Customer
+            </button>
+
+            <button>
+                + Add Expense
+            </button>
+
+        </section>
+
+
+        <!-- Stats -->
+        <section class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+
+                <div>
+                    <p>Today's Sales</p>
+
+                    <h2>
+                        ₹{{ "%.2f"|format(today_sales) }}
+                    </h2>
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+
+                <div>
+                    <p>Today's Profit</p>
+
+                    <h2>
+                        ₹{{ "%.2f"|format(today_profit) }}
+                    </h2>
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-icon">📒</div>
+
+                <div>
+                    <p>Pending Udhaar</p>
+
+                    <h2>
+                        ₹{{ "%.2f"|format(pending_credit) }}
+                    </h2>
+                </div>
+            </div>
+
+
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+
+                <div>
+                    <p>Low Stock Items</p>
+
+                    <h2>
+                        {{ low_stock }}
+                    </h2>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- Dashboard Sections -->
+        <section class="dashboard-grid">
+
+            <div class="dashboard-card">
+
+                <div class="card-header">
+                    <h3>Recent Sales</h3>
+
+                    <a href="#">View All</a>
+                </div>
+
+                <p class="empty-message">
+                    No sales recorded today.
+                </p>
+
+            </div>
+
+
+            <div class="dashboard-card">
+
+                <div class="card-header">
+                    <h3>Low Stock Alert</h3>
+
+                    <a href="#">View Inventory</a>
+                </div>
+
+                {% if low_stock > 0 %}
+
+                <p class="alert-message">
+                    ⚠️ You have {{ low_stock }} low-stock item(s).
+                </p>
+
+                {% else %}
+
+                <p class="success-message">
+                    ✓ All products have sufficient stock.
+                </p>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+
+        <!-- Footer -->
+        <footer>
+
+            <p>
+                VyapaarOS © 2026 | Built for smarter small businesses
+            </p>
+
+        </footer>
+
+    </main>
+
+</body>
+
+</html>
