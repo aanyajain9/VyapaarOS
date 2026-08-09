@@ -288,6 +288,202 @@ def delete_product(product_id):
     return redirect(url_for("inventory"))
 
 
+
+@app.route("/sales")
+def sales():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    # Available products
+    cursor.execute("""
+        SELECT
+            product_id,
+            name,
+            selling_price,
+            stock_qty,
+            unit
+        FROM products
+        WHERE vendor_id = 1
+        AND stock_qty > 0
+        ORDER BY name
+    """)
+
+    products = cursor.fetchall()
+
+
+    # Customers
+    cursor.execute("""
+    SELECT
+        customer_id,
+        name
+    FROM customers
+    WHERE vendor_id = 1
+    ORDER BY name
+""")
+
+    customers = cursor.fetchall()
+
+
+    cursor.close()
+    connection.close()
+
+
+    return render_template(
+        "sales.html",
+        products=products,
+        customers=customers
+    )
+
+
+@app.route("/sales/create", methods=["POST"])
+def create_sale():
+
+    product_id = int(request.form["product_id"])
+    quantity = float(request.form["quantity"])
+    payment_method = request.form["payment_method"]
+
+    customer_id = request.form.get("customer_id")
+
+    # Empty customer = Walk-in customer
+    if not customer_id:
+        customer_id = None
+    else:
+        customer_id = int(customer_id)
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+
+        # =========================
+        # 1. GET PRODUCT
+        # =========================
+
+        cursor.execute("""
+            SELECT
+                product_id,
+                name,
+                stock_qty,
+                selling_price,
+                purchase_price
+            FROM products
+            WHERE product_id = %s
+            AND vendor_id = 1
+           
+        """, (product_id,))
+
+        product = cursor.fetchone()
+
+        if product is None:
+            return "Product not found", 404
+
+
+        # =========================
+        # 2. VALIDATE QUANTITY
+        # =========================
+
+        if quantity <= 0:
+            return "Invalid quantity", 400
+
+        if product["stock_qty"] < quantity:
+            return "Not enough stock available", 400
+
+
+        # =========================
+        # 3. CALCULATE AMOUNTS
+        # =========================
+
+        selling_price = float(product["selling_price"])
+        cost_price = float(product["purchase_price"])
+
+        subtotal = selling_price * quantity
+        total_amount = subtotal
+
+
+        # =========================
+        # 4. CREATE SALE
+        # =========================
+
+        cursor.execute("""
+            INSERT INTO sales
+            (
+                vendor_id,
+                customer_id,
+                total_amount,
+                payment_method
+            )
+            VALUES (%s, %s, %s, %s)
+        """, (
+            1,
+            customer_id,
+            total_amount,
+            payment_method
+        ))
+
+        sale_id = cursor.lastrowid
+
+
+        # =========================
+        # 5. CREATE SALE ITEM
+        # =========================
+
+        cursor.execute("""
+            INSERT INTO sale_items
+            (
+                sale_id,
+                product_id,
+                quantity,
+                selling_price,
+                cost_price,
+                subtotal
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            sale_id,
+            product_id,
+            quantity,
+            selling_price,
+            cost_price,
+            subtotal
+        ))
+
+
+        # =========================
+        # 6. REDUCE STOCK
+        # =========================
+
+        cursor.execute("""
+            UPDATE products
+            SET stock_qty = stock_qty - %s
+            WHERE product_id = %s
+            AND vendor_id = 1
+        """, (
+            quantity,
+            product_id
+        ))
+
+
+        # =========================
+        # 7. SAVE EVERYTHING
+        # =========================
+
+        connection.commit()
+
+        return redirect(url_for("sales"))
+
+
+    except Exception as e:
+
+        connection.rollback()
+
+        return f"Sale failed: {e}", 500
+
+
+    finally:
+
+        cursor.close()
+        connection.close()
 # =========================
 # RUN APP
 # =========================

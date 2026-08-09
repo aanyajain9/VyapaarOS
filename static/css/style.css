@@ -369,3 +369,78 @@ td {
 .edit-btn:hover {
     text-decoration: underline;
 }
+
+/* Sales */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+}
+
+.form-group input,
+.form-group select {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    outline: none;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #4f46e5;
+}
+
+.sales-info {
+    margin-top: 25px;
+}
+
+.sales-flow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.sales-flow div {
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fafafa;
+}
+
+.sales-flow strong {
+    display: block;
+    margin-top: 8px;
+}
+
+.sales-flow p {
+    color: #777;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+@media (max-width: 800px) {
+
+    .sales-flow {
+        grid-template-columns: 1fr 1fr;
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    .sales-flow {
+        grid-template-columns: 1fr;
+    }
+
+}
