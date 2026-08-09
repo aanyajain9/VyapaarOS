@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for
 import mysql.connector
 import os
 from dotenv import load_dotenv
@@ -16,6 +16,10 @@ def get_db_connection():
         database=os.getenv("DB_NAME")
     )
 
+
+# =========================
+# DASHBOARD
+# =========================
 
 @app.route("/")
 def dashboard():
@@ -37,7 +41,8 @@ def dashboard():
             SUM((selling_price - cost_price) * quantity), 0
         ) AS today_profit
         FROM sale_items
-        JOIN sales ON sale_items.sale_id = sales.sale_id
+        JOIN sales
+            ON sale_items.sale_id = sales.sale_id
         WHERE DATE(sales.sale_date) = CURDATE()
     """)
     today_profit = cursor.fetchone()["today_profit"]
@@ -77,19 +82,45 @@ def dashboard():
         low_stock=low_stock
     )
 
+
+# =========================
+# INVENTORY
+# =========================
+
 @app.route("/inventory")
 def inventory():
+
+    search = request.args.get("search", "").strip()
 
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    cursor.execute("""
-        SELECT *
-        FROM products
-        WHERE vendor_id = 1
-        AND is_active = TRUE
-        ORDER BY product_id DESC
-    """)
+    if search:
+
+        cursor.execute("""
+            SELECT *
+            FROM products
+            WHERE vendor_id = 1
+            AND is_active = TRUE
+            AND (
+                name LIKE %s
+                OR category LIKE %s
+            )
+            ORDER BY product_id DESC
+        """, (
+            f"%{search}%",
+            f"%{search}%"
+        ))
+
+    else:
+
+        cursor.execute("""
+            SELECT *
+            FROM products
+            WHERE vendor_id = 1
+            AND is_active = TRUE
+            ORDER BY product_id DESC
+        """)
 
     products = cursor.fetchall()
 
@@ -98,23 +129,32 @@ def inventory():
 
     return render_template(
         "inventory.html",
-        products=products
+        products=products,
+        search=search
     )
 
+
+# =========================
+# ADD PRODUCT
+# =========================
 
 @app.route("/inventory/add", methods=["POST"])
 def add_product():
 
+    name = request.form["name"]
+    category = request.form.get("category")
+    unit = request.form["unit"]
+
+    stock_qty = float(request.form["stock_qty"])
+    purchase_price = float(request.form["purchase_price"])
+    selling_price = float(request.form["selling_price"])
+
+    low_stock_threshold = float(
+        request.form.get("low_stock_threshold", 5)
+    )
+
     connection = get_db_connection()
     cursor = connection.cursor()
-
-    name = request.form["name"]
-    category = request.form["category"]
-    unit = request.form["unit"]
-    stock_qty = request.form["stock_qty"]
-    purchase_price = request.form["purchase_price"]
-    selling_price = request.form["selling_price"]
-    low_stock_threshold = request.form["low_stock_threshold"]
 
     cursor.execute("""
         INSERT INTO products
@@ -126,10 +166,10 @@ def add_product():
             stock_qty,
             purchase_price,
             selling_price,
-            low_stock_threshold
+            low_stock_threshold,
+            is_active
         )
-        VALUES
-        (%s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, TRUE)
     """, (
         1,
         name,
@@ -146,8 +186,86 @@ def add_product():
     cursor.close()
     connection.close()
 
-    return redirect("/inventory")
+    return redirect(url_for("inventory"))
 
+
+'''edit product'''
+
+@app.route("/inventory/edit/<int:product_id>", methods=["GET", "POST"])
+def edit_product(product_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    if request.method == "POST":
+
+        name = request.form["name"]
+        category = request.form.get("category")
+        unit = request.form["unit"]
+
+        stock_qty = float(request.form["stock_qty"])
+        purchase_price = float(request.form["purchase_price"])
+        selling_price = float(request.form["selling_price"])
+
+        low_stock_threshold = float(
+            request.form.get("low_stock_threshold", 5)
+        )
+
+        cursor.execute("""
+            UPDATE products
+            SET
+                name = %s,
+                category = %s,
+                unit = %s,
+                stock_qty = %s,
+                purchase_price = %s,
+                selling_price = %s,
+                low_stock_threshold = %s
+            WHERE product_id = %s
+            AND vendor_id = 1
+        """, (
+            name,
+            category,
+            unit,
+            stock_qty,
+            purchase_price,
+            selling_price,
+            low_stock_threshold,
+            product_id
+        ))
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect(url_for("inventory"))
+
+    cursor.execute("""
+        SELECT *
+        FROM products
+        WHERE product_id = %s
+        AND vendor_id = 1
+        AND is_active = TRUE
+    """, (product_id,))
+
+    product = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if product is None:
+        return "Product not found", 404
+
+    return render_template(
+        "edit_product.html",
+        product=product
+    )
+
+
+# =========================
+# DELETE PRODUCT
+# =========================
 
 @app.route("/inventory/delete/<int:product_id>")
 def delete_product(product_id):
@@ -167,8 +285,12 @@ def delete_product(product_id):
     cursor.close()
     connection.close()
 
-    return redirect("/inventory")
+    return redirect(url_for("inventory"))
 
+
+# =========================
+# RUN APP
+# =========================
 
 if __name__ == "__main__":
     app.run(debug=True)

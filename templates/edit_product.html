@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>VyapaarOS | Edit Product</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <h2>VyapaarOS</h2>
+            <p>Smart Business Management</p>
+        </div>
+
+        <nav>
+
+            <a href="/">
+                🏠 Dashboard
+            </a>
+
+            <a href="/inventory" class="active">
+                📦 Inventory
+            </a>
+
+            <a href="#">
+                🛒 Sales
+            </a>
+
+            <a href="#">
+                👥 Customers
+            </a>
+
+            <a href="#">
+                💰 Udhaar
+            </a>
+
+            <a href="#">
+                💸 Expenses
+            </a>
+
+            <a href="#">
+                📊 Reports
+            </a>
+
+            <a href="#">
+                ⚙️ Profile
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <h1>Edit Product</h1>
+                <p>Update product information and stock.</p>
+            </div>
+
+        </header>
+
+
+        <section class="dashboard-card">
+
+            <h3>Edit {{ product.name }}</h3>
+
+            <form method="POST">
+
+                <div class="form-grid">
+
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{ product.name }}"
+                        placeholder="Product name"
+                        required
+                    >
+
+                    <input
+                        type="text"
+                        name="category"
+                        value="{{ product.category or '' }}"
+                        placeholder="Category"
+                    >
+
+                    <input
+                        type="text"
+                        name="unit"
+                        value="{{ product.unit }}"
+                        placeholder="Unit"
+                        required
+                    >
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="stock_qty"
+                        value="{{ product.stock_qty }}"
+                        placeholder="Stock quantity"
+                        required
+                    >
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="purchase_price"
+                        value="{{ product.purchase_price }}"
+                        placeholder="Purchase price"
+                        required
+                    >
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="selling_price"
+                        value="{{ product.selling_price }}"
+                        placeholder="Selling price"
+                        required
+                    >
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="low_stock_threshold"
+                        value="{{ product.low_stock_threshold }}"
+                        placeholder="Low stock threshold"
+                        required
+                    >
+
+                </div>
+
+                <button type="submit">
+                    Save Changes
+                </button>
+
+                <a
+                    href="/inventory"
+                    style="margin-left: 10px;"
+                >
+                    Cancel
+                </a>
+
+            </form>
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>
