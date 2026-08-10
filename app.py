@@ -503,6 +503,161 @@ def create_sale():
 
         cursor.close()
         connection.close()
+
+
+
+# =========================
+# CUSTOMERS
+# =========================
+
+@app.route("/customers")
+def customers():
+
+    search = request.args.get("search", "").strip()
+    success = request.args.get("success")
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    if search:
+
+        cursor.execute("""
+            SELECT
+                customer_id,
+                name,
+                phone,
+                address,
+                created_at
+            FROM customers
+            WHERE vendor_id = 1
+            AND (
+                name LIKE %s
+                OR phone LIKE %s
+            )
+            ORDER BY customer_id DESC
+        """, (
+            f"%{search}%",
+            f"%{search}%"
+        ))
+
+    else:
+
+        cursor.execute("""
+            SELECT
+                customer_id,
+                name,
+                phone,
+                address,
+                created_at
+            FROM customers
+            WHERE vendor_id = 1
+            ORDER BY customer_id DESC
+        """)
+
+    customer_list = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "customer.html",
+        customers=customer_list,
+        search=search,
+        success=success
+    )
+
+
+# =========================
+# ADD CUSTOMER
+# =========================
+
+@app.route("/customers/add", methods=["POST"])
+def add_customer():
+
+    name = request.form["name"].strip()
+    phone = request.form.get("phone", "").strip()
+    address = request.form.get("address", "").strip()
+
+    if not name:
+        return "Customer name is required", 400
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+            INSERT INTO customers
+            (
+                vendor_id,
+                name,
+                phone,
+                address
+            )
+            VALUES (%s, %s, %s, %s)
+        """, (
+            1,
+            name,
+            phone if phone else None,
+            address if address else None
+        ))
+
+        connection.commit()
+
+    except Exception as e:
+
+        connection.rollback()
+        return f"Customer creation failed: {e}", 500
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+    return redirect(
+        url_for(
+            "customers",
+            success="Customer added successfully!"
+        )
+    )
+
+
+# =========================
+# DELETE CUSTOMER
+# =========================
+
+@app.route("/customers/delete/<int:customer_id>")
+def delete_customer(customer_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+            DELETE FROM customers
+            WHERE customer_id = %s
+            AND vendor_id = 1
+        """, (customer_id,))
+
+        connection.commit()
+
+    except Exception as e:
+
+        connection.rollback()
+        return f"Customer deletion failed: {e}", 500
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+    return redirect(
+        url_for(
+            "customers",
+            success="Customer deleted successfully!"
+        )
+    )
 # =========================
 # RUN APP
 # =========================
