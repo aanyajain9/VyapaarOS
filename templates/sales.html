@@ -82,6 +82,14 @@
 
         </header>
 
+        {% if success %}
+
+        <div class="success-message">
+            ✅ {{ success }}
+        </div>
+
+        {% endif %}
+
 
         <!-- Sale Form -->
 
@@ -214,6 +222,9 @@
         </section>
 
 
+
+
+
         <!-- Product Information -->
 
         <section class="dashboard-card sales-info">
@@ -249,6 +260,83 @@
             </div>
 
         </section>
+
+
+        <section class="dashboard-card sales-history">
+
+    <div class="card-header">
+
+        <h3>Recent Sales</h3>
+
+        <span>
+            Latest 10 transactions
+        </span>
+
+    </div>
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Sale ID</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Payment</th>
+                    <th>Total</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for sale in recent_sales %}
+
+                <tr>
+
+                    <td>
+                        #{{ sale.sale_id }}
+                    </td>
+
+                    <td>
+                        {{ sale.sale_date }}
+                    </td>
+
+                    <td>
+                        {{ sale.customer_name }}
+                    </td>
+
+                    <td>
+                        {{ sale.payment_method }}
+                    </td>
+
+                    <td>
+                        ₹{{ "%.2f"|format(sale.total_amount) }}
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="5" class="empty-message">
+                        No sales recorded yet.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
 
     </main>
 

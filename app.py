@@ -288,9 +288,10 @@ def delete_product(product_id):
     return redirect(url_for("inventory"))
 
 
-
 @app.route("/sales")
 def sales():
+
+    success = request.args.get("success")
 
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
@@ -311,31 +312,46 @@ def sales():
 
     products = cursor.fetchall()
 
-
     # Customers
     cursor.execute("""
-    SELECT
-        customer_id,
-        name
-    FROM customers
-    WHERE vendor_id = 1
-    ORDER BY name
-""")
+        SELECT
+            customer_id,
+            name
+        FROM customers
+        WHERE vendor_id = 1
+        ORDER BY name
+    """)
 
     customers = cursor.fetchall()
 
+    # Recent Sales
+    cursor.execute("""
+        SELECT
+            s.sale_id,
+            s.sale_date,
+            s.total_amount,
+            s.payment_method,
+            COALESCE(c.name, 'Walk-in Customer') AS customer_name
+        FROM sales s
+        LEFT JOIN customers c
+            ON s.customer_id = c.customer_id
+        WHERE s.vendor_id = 1
+        ORDER BY s.sale_id DESC
+        LIMIT 10
+    """)
+
+    recent_sales = cursor.fetchall()
 
     cursor.close()
     connection.close()
 
-
     return render_template(
         "sales.html",
         products=products,
-        customers=customers
+        customers=customers,
+        recent_sales=recent_sales,
+        success=success
     )
-
-
 @app.route("/sales/create", methods=["POST"])
 def create_sale():
 
@@ -360,6 +376,8 @@ def create_sale():
         # 1. GET PRODUCT
         # =========================
 
+        # 1. GET PRODUCT
+
         cursor.execute("""
             SELECT
                 product_id,
@@ -370,7 +388,6 @@ def create_sale():
             FROM products
             WHERE product_id = %s
             AND vendor_id = 1
-           
         """, (product_id,))
 
         product = cursor.fetchone()
@@ -470,7 +487,9 @@ def create_sale():
 
         connection.commit()
 
-        return redirect(url_for("sales"))
+        return redirect(
+            url_for("sales", success="Sale completed successfully!")
+        )
 
 
     except Exception as e:

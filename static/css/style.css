@@ -444,3 +444,13 @@ td {
     }
 
 }
+
+
+.sales-history {
+    margin-top: 25px;
+}
+
+.sales-history .card-header span {
+    color: #777;
+    font-size: 13px;
+}
