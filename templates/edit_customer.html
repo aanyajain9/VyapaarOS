@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>VyapaarOS | Edit Customer</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <h2>VyapaarOS</h2>
+
+            <p>
+                Smart Business Management
+            </p>
+
+        </div>
+
+        <nav>
+
+            <a href="/">
+                🏠 Dashboard
+            </a>
+
+            <a href="/inventory">
+                📦 Inventory
+            </a>
+
+            <a href="/sales">
+                🛒 Sales
+            </a>
+
+            <a href="/customers" class="active">
+                👥 Customers
+            </a>
+
+            <a href="#">
+                💰 Udhaar
+            </a>
+
+            <a href="#">
+                💸 Expenses
+            </a>
+
+            <a href="#">
+                📊 Reports
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Edit Customer</h1>
+
+                <p>
+                    Update customer information.
+                </p>
+
+            </div>
+
+        </header>
+
+
+        <section class="dashboard-card">
+
+            <h3>
+                Customer Details
+            </h3>
+
+
+            <form
+                method="POST"
+                action="/customers/edit/{{ customer.customer_id }}"
+            >
+
+                <div class="form-grid">
+
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{ customer.name }}"
+                        placeholder="Customer name"
+                        required
+                    >
+
+                    <input
+                        type="text"
+                        name="phone"
+                        value="{{ customer.phone or '' }}"
+                        placeholder="Phone number"
+                    >
+
+                    <input
+                        type="text"
+                        name="address"
+                        value="{{ customer.address or '' }}"
+                        placeholder="Address"
+                    >
+
+                </div>
+
+
+                <button type="submit">
+                    Save Changes
+                </button>
+
+
+                <a
+                    href="/customers"
+                    style="margin-left: 10px;"
+                >
+                    Cancel
+                </a>
+
+            </form>
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>

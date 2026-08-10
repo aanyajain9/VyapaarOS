@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>VyapaarOS | Udhaar</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <h2>VyapaarOS</h2>
+
+            <p>
+                Smart Business Management
+            </p>
+
+        </div>
+
+
+        <nav>
+
+            <a href="/">
+                🏠 Dashboard
+            </a>
+
+            <a href="/inventory">
+                📦 Inventory
+            </a>
+
+            <a href="/sales">
+                🛒 Sales
+            </a>
+
+            <a href="/customers">
+                👥 Customers
+            </a>
+
+            <a href="/udhaar" class="active">
+                💰 Udhaar
+            </a>
+
+            <a href="#">
+                💸 Expenses
+            </a>
+
+            <a href="#">
+                📊 Reports
+            </a>
+
+            <a href="#">
+                ⚙️ Profile
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- Main -->
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>
+                    Udhaar
+                </h1>
+
+                <p>
+                    Track customer credit and payments.
+                </p>
+
+            </div>
+
+        </header>
+
+
+        <!-- Add Udhaar -->
+
+        <section class="dashboard-card">
+
+            <h3>
+                Add Udhaar
+            </h3>
+
+
+            <form
+                method="POST"
+                action="/udhaar/add"
+            >
+
+                <div class="form-grid">
+
+                    <select
+                        name="customer_id"
+                        required
+                    >
+
+                        <option value="">
+                            Select Customer
+                        </option>
+
+                        {% for customer in customers %}
+
+                        <option
+                            value="{{ customer.customer_id }}"
+                        >
+
+                            {{ customer.name }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+
+                    <input
+                        type="number"
+                        name="amount"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="Udhaar amount"
+                        required
+                    >
+
+
+                    <input
+                        type="text"
+                        name="notes"
+                        placeholder="Notes (optional)"
+                    >
+
+                </div>
+
+
+                <button type="submit">
+                    + Add Udhaar
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- Receive Payment -->
+
+        <section class="dashboard-card">
+
+            <h3>
+                Receive Payment
+            </h3>
+
+
+            <form
+                method="POST"
+                action="/udhaar/payment"
+            >
+
+                <div class="form-grid">
+
+                    <select
+                        name="customer_id"
+                        required
+                    >
+
+                        <option value="">
+                            Select Customer
+                        </option>
+
+                        {% for customer in customers %}
+
+                        <option
+                            value="{{ customer.customer_id }}"
+                        >
+
+                            {{ customer.name }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+
+                    <input
+                        type="number"
+                        name="amount"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="Payment amount"
+                        required
+                    >
+
+
+                    <input
+                        type="text"
+                        name="notes"
+                        placeholder="Notes (optional)"
+                    >
+
+                </div>
+
+
+                <button type="submit">
+                    💵 Receive Payment
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- Customer Balances -->
+
+        <section class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Customer Balances
+                </h3>
+
+                <span>
+                    {{ customers|length }} Customers
+                </span>
+
+            </div>
+
+
+            <!-- Search -->
+
+            <form
+                method="GET"
+                action="/udhaar"
+                class="search-form"
+            >
+
+                <input
+                    type="text"
+                    name="search"
+                    placeholder="Search customer..."
+                    value="{{ search }}"
+                >
+
+                <button type="submit">
+                    Search
+                </button>
+
+            </form>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Customer
+                            </th>
+
+                            <th>
+                                Phone
+                            </th>
+
+                            <th>
+                                Pending Udhaar
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for customer in customers %}
+
+                        <tr>
+
+                            <td>
+                                {{ customer.name }}
+                            </td>
+
+                            <td>
+                                {{ customer.phone or '-' }}
+                            </td>
+
+                            <td>
+
+                                {% if customer.pending_amount > 0 %}
+
+                                <span class="status low">
+
+                                    ₹{{ "%.2f"|format(
+                                        customer.pending_amount
+                                    ) }}
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="status good">
+
+                                    ₹0.00
+
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="3"
+                                class="empty-message"
+                            >
+
+                                No customers found.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- Recent Transactions -->
+
+        <section class="dashboard-card">
+
+            <div class="card-header">
+
+                <h3>
+                    Recent Transactions
+                </h3>
+
+                <span>
+                    Latest 20
+                </span>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Customer
+                            </th>
+
+                            <th>
+                                Type
+                            </th>
+
+                            <th>
+                                Amount
+                            </th>
+
+                            <th>
+                                Notes
+                            </th>
+
+                            <th>
+                                Date
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for transaction in transactions %}
+
+                        <tr>
+
+                            <td>
+                                {{ transaction.customer_name }}
+                            </td>
+
+
+                            <td>
+
+                                {% if transaction.transaction_type == 'CREDIT' %}
+
+                                <span class="status low">
+                                    Udhaar
+                                </span>
+
+                                {% else %}
+
+                                <span class="status good">
+                                    Payment
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+                                ₹{{ "%.2f"|format(
+                                    transaction.amount
+                                ) }}
+                            </td>
+
+
+                            <td>
+                                {{ transaction.notes or '-' }}
+                            </td>
+
+
+                            <td>
+                                {{ transaction.transaction_date }}
+                            </td>
+
+                        </tr>
+
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="empty-message"
+                            >
+
+                                No transactions yet.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <footer>
+
+            <p>
+                VyapaarOS © 2026 | Built for smarter small businesses
+            </p>
+
+        </footer>
+
+    </main>
+
+</body>
+
+</html>

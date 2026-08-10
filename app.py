@@ -361,6 +361,9 @@ def create_sale():
 
     customer_id = request.form.get("customer_id")
 
+    if payment_method == "CREDIT" and not customer_id:
+        return "Customer is required for Udhaar sale", 400
+
     # Empty customer = Walk-in customer
     if not customer_id:
         customer_id = None
@@ -466,6 +469,32 @@ def create_sale():
         ))
 
 
+
+# =========================
+# 6. CREATE UDHAR TRANSACTION
+# =========================
+
+        if payment_method == "CREDIT" and customer_id is not None:
+
+            cursor.execute("""
+                INSERT INTO credit_transactions
+                (
+                    vendor_id,
+                    customer_id,
+                    sale_id,
+                    transaction_type,
+                    amount,
+                    notes
+                )
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (
+                1,
+                customer_id,
+                sale_id,
+                "CREDIT",
+                total_amount,
+                "Credit from sale"
+            ))
         # =========================
         # 6. REDUCE STOCK
         # =========================
@@ -658,6 +687,334 @@ def delete_customer(customer_id):
             success="Customer deleted successfully!"
         )
     )
+
+
+# =========================
+# EDIT CUSTOMER
+# =========================
+
+@app.route("/customers/edit/<int:customer_id>", methods=["GET", "POST"])
+def edit_customer(customer_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    if request.method == "POST":
+
+        name = request.form["name"].strip()
+        phone = request.form.get("phone", "").strip()
+        address = request.form.get("address", "").strip()
+
+        if not name:
+            return "Customer name is required", 400
+
+        cursor.execute("""
+            UPDATE customers
+            SET
+                name = %s,
+                phone = %s,
+                address = %s
+            WHERE customer_id = %s
+            AND vendor_id = 1
+        """, (
+            name,
+            phone if phone else None,
+            address if address else None,
+            customer_id
+        ))
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect(
+            url_for(
+                "customers",
+                success="Customer updated successfully!"
+            )
+        )
+
+    # Get customer
+    cursor.execute("""
+        SELECT
+            customer_id,
+            name,
+            phone,
+            address
+        FROM customers
+        WHERE customer_id = %s
+        AND vendor_id = 1
+    """, (customer_id,))
+
+    customer = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if customer is None:
+        return "Customer not found", 404
+
+    return render_template(
+        "edit_customer.html",
+        customer=customer
+    )
+
+
+# =========================
+# UDHAR / CREDIT
+# =========================
+
+@app.route("/udhaar")
+def udhaar():
+
+    search = request.args.get("search", "").strip()
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    # Customers with their pending balance
+    if search:
+
+        cursor.execute("""
+            SELECT
+                c.customer_id,
+                c.name,
+                c.phone,
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN ct.transaction_type = 'CREDIT'
+                                THEN ct.amount
+                            WHEN ct.transaction_type = 'PAYMENT'
+                                THEN -ct.amount
+                            ELSE 0
+                        END
+                    ), 0
+                ) AS pending_amount
+            FROM customers c
+            LEFT JOIN credit_transactions ct
+                ON c.customer_id = ct.customer_id
+                AND ct.vendor_id = 1
+            WHERE c.vendor_id = 1
+            AND (
+                c.name LIKE %s
+                OR c.phone LIKE %s
+            )
+            GROUP BY
+                c.customer_id,
+                c.name,
+                c.phone
+            ORDER BY c.name
+        """, (
+            f"%{search}%",
+            f"%{search}%"
+        ))
+
+    else:
+
+        cursor.execute("""
+            SELECT
+                c.customer_id,
+                c.name,
+                c.phone,
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN ct.transaction_type = 'CREDIT'
+                                THEN ct.amount
+                            WHEN ct.transaction_type = 'PAYMENT'
+                                THEN -ct.amount
+                            ELSE 0
+                        END
+                    ), 0
+                ) AS pending_amount
+            FROM customers c
+            LEFT JOIN credit_transactions ct
+                ON c.customer_id = ct.customer_id
+                AND ct.vendor_id = 1
+            WHERE c.vendor_id = 1
+            GROUP BY
+                c.customer_id,
+                c.name,
+                c.phone
+            ORDER BY c.name
+        """)
+
+    customers = cursor.fetchall()
+
+    # Recent transactions
+    cursor.execute("""
+        SELECT
+            ct.transaction_id,
+            ct.transaction_type,
+            ct.amount,
+            ct.notes,
+            ct.transaction_date,
+            c.name AS customer_name
+        FROM credit_transactions ct
+        JOIN customers c
+            ON ct.customer_id = c.customer_id
+        WHERE ct.vendor_id = 1
+        ORDER BY ct.transaction_id DESC
+        LIMIT 20
+    """)
+
+    transactions = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "udhaar.html",
+        customers=customers,
+        transactions=transactions,
+        search=search
+    )
+
+
+# =========================
+# ADD UDHAR / CREDIT
+# =========================
+
+@app.route("/udhaar/add", methods=["POST"])
+def add_udhaar():
+
+    customer_id = int(request.form["customer_id"])
+    amount = float(request.form["amount"])
+    notes = request.form.get("notes", "").strip()
+
+    if amount <= 0:
+        return "Amount must be greater than zero", 400
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+            INSERT INTO credit_transactions
+            (
+                vendor_id,
+                customer_id,
+                sale_id,
+                transaction_type,
+                amount,
+                notes
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            1,
+            customer_id,
+            None,
+            "CREDIT",
+            amount,
+            notes if notes else None
+        ))
+
+        connection.commit()
+
+    except Exception as e:
+
+        connection.rollback()
+
+        return f"Udhaar creation failed: {e}", 500
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for("udhaar"))
+
+
+# =========================
+# RECEIVE PAYMENT
+# =========================
+
+@app.route("/udhaar/payment", methods=["POST"])
+def receive_payment():
+
+    customer_id = int(request.form["customer_id"])
+    amount = float(request.form["amount"])
+    notes = request.form.get("notes", "").strip()
+
+    if amount <= 0:
+        return "Amount must be greater than zero", 400
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+
+        # Calculate current pending amount
+        cursor.execute("""
+            SELECT
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN transaction_type = 'CREDIT'
+                                THEN amount
+                            WHEN transaction_type = 'PAYMENT'
+                                THEN -amount
+                            ELSE 0
+                        END
+                    ), 0
+                ) AS pending_amount
+            FROM credit_transactions
+            WHERE vendor_id = 1
+            AND customer_id = %s
+        """, (customer_id,))
+
+        result = cursor.fetchone()
+
+        pending_amount = float(result["pending_amount"] or 0)
+
+        # Customer cannot pay more than pending amount
+        if pending_amount <= 0:
+            return "This customer has no pending Udhaar", 400
+
+        if amount > pending_amount:
+            return (
+                f"Payment cannot exceed pending Udhaar "
+                f"of ₹{pending_amount:.2f}"
+            ), 400
+
+        # Add payment transaction
+        cursor.execute("""
+            INSERT INTO credit_transactions
+            (
+                vendor_id,
+                customer_id,
+                sale_id,
+                transaction_type,
+                amount,
+                notes
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            1,
+            customer_id,
+            None,
+            "PAYMENT",
+            amount,
+            notes if notes else None
+        ))
+
+        connection.commit()
+
+    except Exception as e:
+
+        connection.rollback()
+
+        return f"Payment failed: {e}", 500
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for("udhaar"))
 # =========================
 # RUN APP
 # =========================
