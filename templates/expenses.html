@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>VyapaarOS | Expenses</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <h2>VyapaarOS</h2>
+            <p>Smart Business Management</p>
+        </div>
+
+        <nav>
+
+            <a href="/">🏠 Dashboard</a>
+
+            <a href="/inventory">📦 Inventory</a>
+
+            <a href="/sales">🛒 Sales</a>
+
+            <a href="/customers">👥 Customers</a>
+
+            <a href="/udhaar">💰 Udhaar</a>
+
+            <a href="/expenses" class="active">
+                💸 Expenses
+            </a>
+
+            <a href="/reports">📊 Reports</a>
+
+            <a href="#">⚙️ Profile</a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- Main Content -->
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Expenses</h1>
+
+                <p>
+                    Track and manage your business expenses.
+                </p>
+
+            </div>
+
+        </header>
+
+
+        {% if success %}
+
+        <div class="success-message">
+            ✅ {{ success }}
+        </div>
+
+        {% endif %}
+
+
+        <!-- Add Expense -->
+
+        <section class="dashboard-card">
+
+            <h3>Add New Expense</h3>
+
+            <form method="POST"
+                  action="/expenses/add">
+
+                <div class="form-grid">
+
+                    <input
+                        type="text"
+                        name="category"
+                        placeholder="Category (Rent, Electricity...)"
+                        required
+                    >
+
+                    <input
+                        type="number"
+                        name="amount"
+                        placeholder="Amount"
+                        min="0.01"
+                        step="0.01"
+                        required
+                    >
+
+                    <input
+                        type="text"
+                        name="description"
+                        placeholder="Description"
+                    >
+
+                </div>
+
+                <button type="submit">
+                    + Add Expense
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- Expense History -->
+
+        <section class="dashboard-card inventory-section">
+
+            <div class="card-header">
+
+                <h3>Expense History</h3>
+
+                <span>
+                    {{ expenses|length }} Expenses
+                </span>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for expense in expenses %}
+
+                        <tr>
+
+                            <td>
+                                {{ expense.category }}
+                            </td>
+
+                            <td>
+                                {{ expense.description or '-' }}
+                            </td>
+
+                            <td>
+                                ₹{{ "%.2f"|format(expense.amount) }}
+                            </td>
+
+                            <td>
+                                {{ expense.expense_date }}
+                            </td>
+
+                            <td>
+
+                                <a
+                                    class="delete-btn"
+                                    href="/expenses/delete/{{ expense.expense_id }}"
+                                    onclick="return confirm('Delete this expense?')"
+                                >
+                                    Delete
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="empty-message"
+                            >
+                                No expenses recorded yet.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <footer>
+
+            <p>
+                VyapaarOS © 2026 | Built for smarter small businesses
+            </p>
+
+        </footer>
+
+    </main>
+
+</body>
+
+</html>

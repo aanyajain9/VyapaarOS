@@ -27,61 +27,103 @@ def dashboard():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # Today's Sales
+    # =========================
+    # TODAY'S SALES
+    # =========================
+
     cursor.execute("""
         SELECT COALESCE(SUM(total_amount), 0) AS today_sales
         FROM sales
-        WHERE DATE(sale_date) = CURDATE()
+        WHERE vendor_id = 1
+        AND DATE(sale_date) = CURDATE()
     """)
+
     today_sales = cursor.fetchone()["today_sales"]
 
-    # Today's Profit
+
+    # =========================
+    # TODAY'S GROSS PROFIT
+    # =========================
+
     cursor.execute("""
         SELECT COALESCE(
-            SUM((selling_price - cost_price) * quantity), 0
+            SUM((selling_price - cost_price) * quantity),
+            0
         ) AS today_profit
         FROM sale_items
         JOIN sales
             ON sale_items.sale_id = sales.sale_id
-        WHERE DATE(sales.sale_date) = CURDATE()
+        WHERE sales.vendor_id = 1
+        AND DATE(sales.sale_date) = CURDATE()
     """)
+
     today_profit = cursor.fetchone()["today_profit"]
 
-    # Pending Udhaar
+
+    # =========================
+    # PENDING UDHAR
+    # =========================
+
     cursor.execute("""
         SELECT COALESCE(
             SUM(
                 CASE
-                    WHEN transaction_type = 'CREDIT' THEN amount
-                    WHEN transaction_type = 'PAYMENT' THEN -amount
+                    WHEN transaction_type = 'CREDIT'
+                        THEN amount
+                    WHEN transaction_type = 'PAYMENT'
+                        THEN -amount
                     ELSE 0
                 END
-            ), 0
+            ),
+            0
         ) AS pending_credit
         FROM credit_transactions
+        WHERE vendor_id = 1
     """)
+
     pending_credit = cursor.fetchone()["pending_credit"]
 
-    # Low Stock
+
+    # =========================
+    # LOW STOCK
+    # =========================
+
     cursor.execute("""
         SELECT COUNT(*) AS low_stock
         FROM products
-        WHERE stock_qty <= low_stock_threshold
-        AND is_active = TRUE
+        WHERE vendor_id = 1
+        AND stock_qty <= low_stock_threshold
     """)
+
     low_stock = cursor.fetchone()["low_stock"]
+
+
+    # =========================
+    # TODAY'S EXPENSES
+    # =========================
+
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0) AS today_expenses
+        FROM expenses
+        WHERE vendor_id = 1
+        AND DATE(expense_date) = CURDATE()
+    """)
+
+    today_expenses = cursor.fetchone()["today_expenses"]
+
 
     cursor.close()
     connection.close()
+
 
     return render_template(
         "dashboard.html",
         today_sales=today_sales,
         today_profit=today_profit,
         pending_credit=pending_credit,
-        low_stock=low_stock
+        low_stock=low_stock,
+        today_expenses=today_expenses
     )
-
 
 # =========================
 # INVENTORY
@@ -1015,6 +1057,133 @@ def receive_payment():
         connection.close()
 
     return redirect(url_for("udhaar"))
+
+
+
+
+# =========================
+# EXPENSES
+# =========================
+
+@app.route("/expenses")
+def expenses():
+
+    success = request.args.get("success")
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT *
+        FROM expenses
+        WHERE vendor_id = 1
+        ORDER BY expense_id DESC
+    """)
+
+    expense_list = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "expenses.html",
+        expenses=expense_list,
+        success=success
+    )
+
+
+# =========================
+# ADD EXPENSE
+# =========================
+
+@app.route("/expenses/add", methods=["POST"])
+def add_expense():
+
+    category = request.form["category"].strip()
+    amount = float(request.form["amount"])
+    description = request.form.get("description", "").strip()
+
+    if amount <= 0:
+        return "Amount must be greater than zero", 400
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+    INSERT INTO expenses
+    (
+        vendor_id,
+        category,
+        amount,
+        description,
+        expense_date
+    )
+    VALUES (%s, %s, %s, %s, NOW())
+""", (
+    1,
+    category,
+    amount,
+    description if description else None
+    ))
+
+        connection.commit()
+
+    except Exception as e:
+
+        connection.rollback()
+        return f"Expense creation failed: {e}", 500
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+    return redirect(
+        url_for(
+            "expenses",
+            success="Expense added successfully!"
+        )
+    )
+
+
+# =========================
+# DELETE EXPENSE
+# =========================
+
+@app.route("/expenses/delete/<int:expense_id>")
+def delete_expense(expense_id):
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+            DELETE FROM expenses
+            WHERE expense_id = %s
+            AND vendor_id = 1
+        """, (expense_id,))
+
+        connection.commit()
+
+    except Exception as e:
+
+        connection.rollback()
+        return f"Expense deletion failed: {e}", 500
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+    return redirect(
+        url_for(
+            "expenses",
+            success="Expense deleted successfully!"
+        )
+    )
 # =========================
 # RUN APP
 # =========================
