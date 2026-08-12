@@ -1184,6 +1184,173 @@ def delete_expense(expense_id):
             success="Expense deleted successfully!"
         )
     )
+
+
+# =========================
+# REPORTS
+# =========================
+
+@app.route("/reports")
+def reports():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    # =========================
+    # TOTAL SALES
+    # =========================
+
+    cursor.execute("""
+        SELECT COALESCE(
+            SUM(total_amount), 0
+        ) AS total_sales
+        FROM sales
+        WHERE vendor_id = 1
+    """)
+
+    total_sales = cursor.fetchone()["total_sales"]
+
+
+    # =========================
+    # GROSS PROFIT
+    # =========================
+
+    cursor.execute("""
+        SELECT COALESCE(
+            SUM(
+                (selling_price - cost_price) * quantity
+            ), 0
+        ) AS gross_profit
+        FROM sale_items si
+        JOIN sales s
+            ON si.sale_id = s.sale_id
+        WHERE s.vendor_id = 1
+    """)
+
+    gross_profit = cursor.fetchone()["gross_profit"]
+
+
+    # =========================
+    # TOTAL EXPENSES
+    # =========================
+
+    cursor.execute("""
+        SELECT COALESCE(
+            SUM(amount), 0
+        ) AS total_expenses
+        FROM expenses
+        WHERE vendor_id = 1
+    """)
+
+    total_expenses = cursor.fetchone()["total_expenses"]
+
+
+    # =========================
+    # NET PROFIT
+    # =========================
+
+    net_profit = (
+        float(gross_profit or 0)
+        - float(total_expenses or 0)
+    )
+
+
+    # =========================
+    # PENDING UDHAR
+    # =========================
+
+    cursor.execute("""
+        SELECT COALESCE(
+            SUM(
+                CASE
+                    WHEN transaction_type = 'CREDIT'
+                        THEN amount
+                    WHEN transaction_type = 'PAYMENT'
+                        THEN -amount
+                    ELSE 0
+                END
+            ), 0
+        ) AS pending_credit
+        FROM credit_transactions
+        WHERE vendor_id = 1
+    """)
+
+    pending_credit = cursor.fetchone()["pending_credit"]
+
+
+    # =========================
+    # LOW STOCK
+    # =========================
+
+    cursor.execute("""
+        SELECT COUNT(*) AS low_stock
+        FROM products
+        WHERE vendor_id = 1
+        AND stock_qty <= low_stock_threshold
+    """)
+
+    low_stock = cursor.fetchone()["low_stock"]
+
+
+    # =========================
+    # RECENT SALES
+    # =========================
+
+    cursor.execute("""
+        SELECT
+            s.sale_id,
+            s.total_amount,
+            s.payment_method,
+            s.sale_date,
+            COALESCE(
+                c.name,
+                'Walk-in Customer'
+            ) AS customer_name
+        FROM sales s
+        LEFT JOIN customers c
+            ON s.customer_id = c.customer_id
+        WHERE s.vendor_id = 1
+        ORDER BY s.sale_id DESC
+        LIMIT 10
+    """)
+
+    recent_sales = cursor.fetchall()
+
+
+    # =========================
+    # RECENT EXPENSES
+    # =========================
+
+    cursor.execute("""
+        SELECT
+            category,
+            description,
+            amount,
+            expense_date
+        FROM expenses
+        WHERE vendor_id = 1
+        ORDER BY expense_id DESC
+        LIMIT 10
+    """)
+
+    recent_expenses = cursor.fetchall()
+
+
+    cursor.close()
+    connection.close()
+
+
+    return render_template(
+        "reports.html",
+        total_sales=total_sales,
+        gross_profit=gross_profit,
+        total_expenses=total_expenses,
+        net_profit=net_profit,
+        pending_credit=pending_credit,
+        low_stock=low_stock,
+        recent_sales=recent_sales,
+        recent_expenses=recent_expenses
+    )
 # =========================
 # RUN APP
 # =========================

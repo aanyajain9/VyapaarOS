@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>VyapaarOS | Reports</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <h2>VyapaarOS</h2>
+
+            <p>Smart Business Management</p>
+
+        </div>
+
+        <nav>
+
+
+            <a href="/">
+                🏠 Dashboard
+            </a>
+
+            <a href="/inventory">
+                📦 Inventory
+            </a>
+
+            <a href="/sales">
+                🛒 Sales
+            </a>
+
+            <a href="/customers">
+                👥 Customers
+            </a>
+
+            <a href="/udhaar">
+                💰 Udhaar
+            </a>
+
+            <a href="/expenses">
+                💸 Expenses
+            </a>
+
+
+            <a href="/profile">
+                ⚙️ Profile
+            </a>
+
+
+
+            <a href="/reports" class="active">
+                📊 Reports
+            </a>
+
+
+
+        </nav>
+
+    </aside>
+
+
+    <!-- Main Content -->
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Reports</h1>
+
+                <p>
+                    Business performance overview.
+                </p>
+
+            </div>
+
+        </header>
+
+
+        <!-- Summary -->
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    💰
+                </div>
+
+                <div>
+
+                    <p>Total Sales</p>
+
+                    <h2>
+                        ₹{{ "%.2f"|format(total_sales) }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    📈
+                </div>
+
+                <div>
+
+                    <p>Gross Profit</p>
+
+                    <h2>
+                        ₹{{ "%.2f"|format(gross_profit) }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    💸
+                </div>
+
+                <div>
+
+                    <p>Total Expenses</p>
+
+                    <h2>
+                        ₹{{ "%.2f"|format(total_expenses) }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    💵
+                </div>
+
+                <div>
+
+                    <p>Net Profit</p>
+
+                    <h2>
+                        ₹{{ "%.2f"|format(net_profit) }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Udhaar + Stock -->
+
+        <section class="stats-grid"
+                 style="margin-top: 20px;">
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    📒
+                </div>
+
+                <div>
+
+                    <p>Pending Udhaar</p>
+
+                    <h2>
+                        ₹{{ "%.2f"|format(pending_credit) }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    ⚠️
+                </div>
+
+                <div>
+
+                    <p>Low Stock Items</p>
+
+                    <h2>
+                        {{ low_stock }}
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Recent Sales -->
+
+        <section class="dashboard-card"
+                 style="margin-top: 25px;">
+
+            <div class="card-header">
+
+                <h3>
+                    Recent Sales
+                </h3>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Sale ID</th>
+                            <th>Customer</th>
+                            <th>Payment</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for sale in recent_sales %}
+
+                        <tr>
+
+                            <td>
+                                #{{ sale.sale_id }}
+                            </td>
+
+                            <td>
+                                {{ sale.customer_name }}
+                            </td>
+
+                            <td>
+                                {{ sale.payment_method }}
+                            </td>
+
+                            <td>
+                                ₹{{ "%.2f"|format(
+                                    sale.total_amount
+                                ) }}
+                            </td>
+
+                            <td>
+                                {{ sale.sale_date }}
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+
+                            <td colspan="5"
+                                class="empty-message">
+
+                                No sales recorded.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- Recent Expenses -->
+
+        <section class="dashboard-card"
+                 style="margin-top: 25px;">
+
+            <div class="card-header">
+
+                <h3>
+                    Recent Expenses
+                </h3>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for expense in recent_expenses %}
+
+                        <tr>
+
+                            <td>
+                                {{ expense.category }}
+                            </td>
+
+                            <td>
+                                {{ expense.description or '-' }}
+                            </td>
+
+                            <td>
+                                ₹{{ "%.2f"|format(
+                                    expense.amount
+                                ) }}
+                            </td>
+
+                            <td>
+                                {{ expense.expense_date }}
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+
+                            <td colspan="4"
+                                class="empty-message">
+
+                                No expenses recorded.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <footer>
+
+            <p>
+                VyapaarOS © 2026 | Built for smarter small businesses
+            </p>
+
+        </footer>
+
+    </main>
+
+</body>
+
+</html>
