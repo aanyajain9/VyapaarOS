@@ -1351,6 +1351,71 @@ def reports():
         recent_sales=recent_sales,
         recent_expenses=recent_expenses
     )
+
+
+# =========================
+# PROFILE
+# =========================
+
+@app.route("/profile", methods=["GET", "POST"])
+def profile():
+
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    if request.method == "POST":
+
+        name = request.form["name"].strip()
+        phone = request.form.get("phone", "").strip()
+        email = request.form.get("email", "").strip()
+        address = request.form.get("address", "").strip()
+
+        cursor.execute("""
+            UPDATE vendors
+            SET
+                name = %s,
+                phone = %s,
+                address = %s
+            WHERE vendor_id = 1
+        """, (
+            name,
+            phone if phone else None,
+            address if address else None
+        ))
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect(
+            url_for(
+                "profile",
+                success="Profile updated successfully!"
+            )
+        )
+
+    cursor.execute("""
+        SELECT *
+        FROM vendors
+        WHERE vendor_id = 1
+    """)
+
+    vendor = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if vendor is None:
+        return "Vendor not found", 404
+
+    success = request.args.get("success")
+
+    return render_template(
+        "profile.html",
+        vendor=vendor,
+        success=success
+    )
 # =========================
 # RUN APP
 # =========================

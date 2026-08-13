@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>VyapaarOS | Profile</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <h2>VyapaarOS</h2>
+            <p>Smart Business Management</p>
+        </div>
+
+        <nav>
+
+            <a href="/">🏠 Dashboard</a>
+
+            <a href="/inventory">📦 Inventory</a>
+
+            <a href="/sales">🛒 Sales</a>
+
+            <a href="/customers">👥 Customers</a>
+
+            <a href="/udhaar">💰 Udhaar</a>
+
+            <a href="/expenses">💸 Expenses</a>
+
+            <a href="/reports">📊 Reports</a>
+
+            <a href="/profile" class="active">
+                ⚙️ Profile
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- Main Content -->
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Profile</h1>
+
+                <p>
+                    Manage your shop information.
+                </p>
+
+            </div>
+
+        </header>
+
+
+        <!-- Profile Card -->
+
+        <section class="dashboard-card profile-card">
+
+            <div class="profile-header">
+
+                <div class="profile-avatar">
+                    👤
+                </div>
+
+                <div>
+
+                    <h2>
+                        {{ vendor.name or "Shop Owner" }}
+                    </h2>
+
+                    <p>
+                        Business Owner
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form method="POST"
+                  action="/profile">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label>
+                            Shop Name
+                        </label>
+
+                        <input
+                            type="text"
+                            name="name"
+                            value="{{ vendor.name or '' }}"
+                            placeholder="Enter shop name"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Phone
+                        </label>
+
+                        <input
+                            type="text"
+                            name="phone"
+                            value="{{ vendor.phone or '' }}"
+                            placeholder="Enter phone number"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            name="email"
+                            value="{{ vendor.email or '' }}"
+                            placeholder="Enter email"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Address
+                        </label>
+
+                        <input
+                            type="text"
+                            name="address"
+                            value="{{ vendor.address or '' }}"
+                            placeholder="Enter shop address"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <button type="submit">
+                    Save Changes
+                </button>
+
+            </form>
+
+        </section>
+
+
+        {% if success %}
+
+        <div class="success-message">
+            ✅ {{ success }}
+        </div>
+
+        {% endif %}
+
+
+        <footer>
+
+            <p>
+                VyapaarOS © 2026 | Built for smarter small businesses
+            </p>
+
+        </footer>
+
+    </main>
+
+</body>
+
+</html>
