@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>VyapaarOS</title>
+
+
+    <link rel="icon"
+      type="image/png"
+      href="{{ url_for('static', filename='images/vyapaaros-logo.png') }}">
+
+      
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    {% block content %}
+    {% endblock %}
+
+
+    <footer class="site-footer">
+    <div>VyapaarOS © 2026</div>
+    <div>Developed by Aanya Jain</div>
+    <div>Built during internship at Talking Crooks IT Pvt. Ltd.</div>
+    </footer>
+
+</body>
+
+</html>

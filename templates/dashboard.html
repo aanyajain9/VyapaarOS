@@ -16,10 +16,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
 
-        <div class="logo">
-            <h2>VyapaarOS</h2>
-            <p>Smart Business Management</p>
-        </div>
+    
 
         <nav>
             
@@ -78,7 +75,7 @@
 
             <div class="profile">
                 👤
-                <span>Shop Owner</span>
+                <span>{{ vendor_name }}</span>
             </div>
 
         </header>
@@ -87,22 +84,21 @@
         <!-- Quick Actions -->
         <section class="quick-actions">
 
-            <button>
+            <a href="/inventory" class="quick-action-btn">
                 + Add Product
-            </button>
+            </a>
 
-            <button>
+            <a href="/sales" class="quick-action-btn">
                 + New Sale
-            </button>
+            </a>
 
-            <button>
+            <a href="/customers" class="quick-action-btn">
                 + Add Customer
-            </button>
+            </a>
 
-            <button>
+            <a href="/expenses" class="quick-action-btn">
                 + Add Expense
-            </button>
-
+            </a>
         </section>
 
 
@@ -228,14 +224,11 @@
 
 
         <!-- Footer -->
-        <footer>
-
-            <p>
-                VyapaarOS © 2026 | Built for smarter small businesses
-            </p>
-
+         <footer class="site-footer">
+    <div>VyapaarOS © 2026</div>
+    <div>Developed by Aanya Jain</div>
+    <div>Built during internship at Talking Crooks IT Pvt. Ltd.</div>
         </footer>
-
     </main>
 
 </body>

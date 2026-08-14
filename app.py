@@ -112,6 +112,25 @@ def dashboard():
     today_expenses = cursor.fetchone()["today_expenses"]
 
 
+    # =========================
+    # VENDOR PROFILE
+    # =========================
+
+    cursor.execute("""
+        SELECT name
+        FROM vendors
+        WHERE vendor_id = 1
+    """)
+
+    vendor = cursor.fetchone()
+
+    vendor_name = vendor["name"] if vendor else "Shop Owner"
+
+
+    # =========================
+    # CLOSE DATABASE
+    # =========================
+
     cursor.close()
     connection.close()
 
@@ -122,9 +141,9 @@ def dashboard():
         today_profit=today_profit,
         pending_credit=pending_credit,
         low_stock=low_stock,
-        today_expenses=today_expenses
+        today_expenses=today_expenses,
+        vendor_name=vendor_name
     )
-
 # =========================
 # INVENTORY
 # =========================
